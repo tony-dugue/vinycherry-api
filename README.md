@@ -1,3 +1,10 @@
+## Présentation du projet
+***
+
+Backend / API en Nestjs de VinyCherry, une application de type mediathèque pour les supports musicaux et plus particulièrement les vinyles (techno utilisées : Nestjs, Docker, Postgres, Prisma, Passport.js et Dotenv)
+
+Ce projet a été initialisé avec le starter de la CLI [Nest](https://github.com/nestjs/nest).
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
 </p>
@@ -22,43 +29,52 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+## 🚀 Installation du projet
+***
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- récupération du projet sur Github par HTTPS :
 
-## Installation
+```shell script
+$ https://github.com/tony-dugue/vinycherry-api.git
+```
 
-```bash
+- installer les packages :
+```shell script
 $ yarn install
 ```
 
-## Running the app
+## Démarrer l'application
+***
+(1) démarrer l'application docker
 
+(2) Démarrer le serveur de développement (à la racine du projet) :
 ```bash
-# development
-$ yarn run start
+$ yarn start #ou $ npm run start
+```
 
-# watch mode
-$ yarn run start:dev
+Ou avec le watch mode
+```bash
+$ yarn start:dev #ou $ npm run start:dev
+```
 
-# production mode
-$ yarn run start:prod
+
+
+### Autres commandes
+
+Préparer l'application pour la production :
+```bash
+$ yarn start:prod #ou $ npm run start:prod
 ```
 
 ## Test
+***
 
 ```bash
-# unit tests
-$ yarn run test
-
 # e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+$ yarn test:e2e #ou $ npm run test:e2e
 ```
 
-## Support
+## Nestjs Support
 
 Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
 
