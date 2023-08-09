@@ -1,0 +1,22 @@
+version: '3.8'
+
+# Commandes utiles :
+#   - nettoyage de la stack : docker-compose down -v --remove-orphans
+#   - démarrage de la stack : docker-compose up -d
+
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    ports:
+      - "5434:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./database/:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: vinycherry-db
+
+volumes:
+  db_data:
