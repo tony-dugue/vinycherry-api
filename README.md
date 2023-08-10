@@ -57,13 +57,26 @@ Ou avec le watch mode
 $ yarn start:dev #ou $ npm run start:dev
 ```
 
-
+(3) dans un 2nd terminal, démarrer la visualisation de la base de données avec prisma :
+```bash
+$ npx prisma studio
+```
 
 ### Autres commandes
+
+Voir les containers docker en cours de fonctionnement (si la bdd est bien démarrée) :
+```bash
+$ docker ps
+```
 
 Préparer l'application pour la production :
 ```bash
 $ yarn start:prod #ou $ npm run start:prod
+```
+
+Générer une migration manuellement :
+```bash
+$ npx prisma migrate dev
 ```
 
 ## Test
@@ -73,6 +86,12 @@ $ yarn start:prod #ou $ npm run start:prod
 # e2e tests
 $ yarn test:e2e #ou $ npm run test:e2e
 ```
+
+## Ressources utilisées dans le projet
+
+[docker](https://www.docker.com/) <br />
+Base de données : [postgres](https://www.postgresql.org/) <br />
+Typescript ORM : [prisma](https://www.prisma.io/) <br />
 
 ## Nestjs Support
 
