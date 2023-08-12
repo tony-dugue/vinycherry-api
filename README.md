@@ -69,6 +69,17 @@ Voir les containers docker en cours de fonctionnement (si la bdd est bien démar
 $ docker ps
 ```
 
+Faire un backup de la base de données / une archive du volume de docker (copie d'une archive tar.gz à la racine du projet) :
+```bash
+$ yarn db:backup
+```
+
+pour redémarrer la base de données (script auto pour tuer la bdd, la redémarrer et appliquer toutes les migrations) :
+```bash
+# après avoir démarrer l'application docker
+$ yarn db:dev:restart
+```
+
 Préparer l'application pour la production :
 ```bash
 $ yarn start:prod #ou $ npm run start:prod
