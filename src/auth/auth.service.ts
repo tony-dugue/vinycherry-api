@@ -22,14 +22,28 @@ export class AuthService {
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
-          throw new ForbiddenException("Un utilisateur possède déjà cet email!");
+          throw new ForbiddenException('Un utilisateur possède déjà cet email!');
         }
       }
       throw error;
     }
   }
 
-  login() {
-    return { msg: 'Je suis connecté' };
+  async login(dto: AuthDto) {
+    // find the user by email
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+    // if user does not exist throw exception
+    if (!user) throw new ForbiddenException('Les informations saisies sont incorrectes!');
+
+    //compare password
+    const pwMatches = await argon.verify(user.hash, dto.password);
+    // if password incorrect thrown exception
+    if (!pwMatches) throw new ForbiddenException('Les informations saisies sont incorrectes!');
+
+    // send back the user
+    delete user.hash;
+    return user;
   }
 }
