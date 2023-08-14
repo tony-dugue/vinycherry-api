@@ -90,6 +90,12 @@ Générer une migration manuellement :
 $ npx prisma migrate dev
 ```
 
+mettre à jour la structure de la base de données lors de la modification du schéma :
+```bash
+$ npx prisma migrate dev --create-only
+$ npx prisma db push
+```
+
 ## Test
 ***
 

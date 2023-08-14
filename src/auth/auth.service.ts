@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AuthDto } from './dto';
+import { LoginUserDto, RegisterUserDto } from './models';
 import * as argon from 'argon2';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { Tokens } from './types';
@@ -13,19 +13,32 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(dto: AuthDto): Promise<Tokens> {
-    // hachage du mot de passe
-    const hash = await this.hashData(dto.password);
+  async registerUser(user: RegisterUserDto): Promise<Tokens> {
+    const existingUser = await this.prisma.user.findUnique({ where: { email: user.email } });
+    if (existingUser) throw new ForbiddenException('Cet email est déjà utilisé');
 
-    // enregistrement du user dans la base de données
+    if (!user.firstName) throw new ForbiddenException('Veuillez saisir un prénom');
+    if (!user.lastName) throw new ForbiddenException('Veuillez saisir un nom');
+
+    if (user.password !== user.confirmationPassword) {
+      throw new ForbiddenException(
+        'le mot de passe et le mot de passe de confirmation doivent être identique!',
+      );
+    }
+    // hachage du mot de passe
+    const hash = await this.hashData(user.password);
+
+    const { email, firstName, lastName } = user;
+
+    // enregistrement du user en base de données
     try {
-      const user = await this.prisma.user.create({
-        data: { email: dto.email, hash },
+      const newUser = await this.prisma.user.create({
+        data: { email, hash, firstName, lastName },
       });
 
       // génération de 2 nouveaux tokens
-      const tokens = await this.getTokens(user.id, user.email);
-      await this.updateRtHash(user.id, tokens.refresh_token);
+      const tokens = await this.getTokens(newUser.id, newUser.email);
+      await this.updateRtHash(newUser.id, tokens.refresh_token);
       return tokens;
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
@@ -37,34 +50,37 @@ export class AuthService {
     }
   }
 
-  async login(dto: AuthDto) {
+  async validateUser(user: LoginUserDto) {
     // récupération du user dans la base de données
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (!user) throw new ForbiddenException('Accès refusé!');
+    const foundUser = await this.prisma.user.findUnique({ where: { email: user.email } });
+    if (!foundUser) throw new ForbiddenException('Accès refusé!');
 
     // comparaison des mots de passe
-    const pwMatches = await argon.verify(user.hash, dto.password);
+    const pwMatches = await argon.verify(foundUser.hash, user.password);
     if (!pwMatches) throw new ForbiddenException('Accès refusé!');
 
     // génération de 2 nouveaux tokens
-    const tokens = await this.getTokens(user.id, user.email);
-    await this.updateRtHash(user.id, tokens.refresh_token);
+    const tokens = await this.getTokens(foundUser.id, foundUser.email);
+    await this.updateRtHash(foundUser.id, tokens.refresh_token);
     return tokens;
   }
 
   async logout(userId: number) {
     await this.prisma.user.updateMany({
-      where: { id: userId, hashedRt: { not: null }},
-      data: { hashedRt: null }
-    })
+      where: { id: userId, hashedRt: { not: null } },
+      data: { hashedRt: null },
+    });
   }
 
-  async refreshTokens(userId: number, rt: string) {
+  async refreshTokens(userId: number, rt: string): Promise<Tokens> {
     // récupération du user dans la base de données
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new ForbiddenException('Accès refusé!');
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId },
+    });
 
-    // comparaison du hash du refresh token
+    if (!user || !user.hashedRt) throw new ForbiddenException('Accès refusé!');
+
+    // comparaison des hash du refresh token
     const rtMatches = await argon.verify(user.hashedRt, rt);
     if (!rtMatches) throw new ForbiddenException('Accès refusé!');
 

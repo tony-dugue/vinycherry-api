@@ -19,8 +19,15 @@ model User {
   hash      String
   hashedRt  String?
 
-  firstname String?
-  lastname  String?
+  firstName String?
+  lastName  String?
+  
+  role    Role     @default(USER)
 
   @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
 }
