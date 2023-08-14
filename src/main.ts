@@ -7,9 +7,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // activation globalement des pipes de validation dans l'app
-  app.useGlobalPipes(
-    new ValidationPipe({ whitelist: true }),
-  );
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
   // on exécute le serveur sur le port 8000
   await app.listen(8000);

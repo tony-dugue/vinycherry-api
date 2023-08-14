@@ -2,10 +2,10 @@ import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 
 export class AuthDto {
   @IsEmail()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Votre email est obligatoire!' })
   email: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Votre mot de passe est obligatoire!' })
   password: string;
 }
