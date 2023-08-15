@@ -19,8 +19,8 @@ model User {
   hash      String
   hashedRt  String?
 
-  firstName String?
-  lastName  String?
+  firstName String
+  lastName  String
   
   role    Role     @default(USER)
 

@@ -1,10 +1,17 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+
+import { GetCurrentUser, GetCurrentUserId } from 'src/common/decorators/user';
+import { RtGuard } from 'src/common/guards';
+
 import { LoginUserDto, RegisterUserDto } from './models';
 import { Tokens } from './types';
-import { AtGuard, RtGuard } from 'src/common/guards';
-import { GetCurrentUser, GetCurrentUserId, Public } from 'src/common/decorators';
+import { AuthService } from './auth.service';
+import { Public } from 'src/common/decorators/auth';
 
+
+@ApiBearerAuth()
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -27,7 +34,6 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   logout(@GetCurrentUserId() userId: number) {
-    console.log(userId);
     return this.authService.logout(userId);
   }
 
