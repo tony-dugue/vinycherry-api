@@ -1,5 +1,5 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { GetCurrentUser, GetCurrentUserId } from 'src/common/decorators/user';
 import { RtGuard } from 'src/common/guards';
@@ -9,7 +9,6 @@ import { Tokens } from './types';
 import { AuthService } from './auth.service';
 import { Public } from 'src/common/decorators/auth';
 
-
 @ApiBearerAuth()
 @ApiTags('auth')
 @Controller('auth')
@@ -18,20 +17,31 @@ export class AuthController {
 
   @Public()
   @Post('local/register')
+  @ApiOperation({
+    summary: "Inscrire un utilisateur",
+    description: "Inscrire un utilisateur",
+  })
   @HttpCode(HttpStatus.CREATED)
   register(@Body() user: RegisterUserDto): Promise<Tokens> {
-    console.log(user);
     return this.authService.registerUser(user);
   }
 
   @Public()
   @Post('local/login')
+  @ApiOperation({
+    summary: "Connecter un utilisateur",
+    description: "Connecter un utilisateur",
+  })
   @HttpCode(HttpStatus.OK)
   login(@Body() user: LoginUserDto) {
     return this.authService.validateUser(user);
   }
 
   @Post('logout')
+  @ApiOperation({
+    summary: "Déconnecter un utilisateur",
+    description: "Déconnecter un utilisateur",
+  })
   @HttpCode(HttpStatus.OK)
   logout(@GetCurrentUserId() userId: number) {
     return this.authService.logout(userId);
@@ -40,6 +50,10 @@ export class AuthController {
   @Public()
   @UseGuards(RtGuard)
   @Post('refresh')
+  @ApiOperation({
+    summary: "Vérifier le refresh token",
+    description: "Vérifier le refresh token",
+  })
   @HttpCode(HttpStatus.OK)
   refreshTokens(
     @GetCurrentUserId() userId: number,
