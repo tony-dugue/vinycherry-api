@@ -1,10 +1,10 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { LoginUserDto, RegisterUserDto } from './models';
+import { TokensDto, LoginUserDto, RegisterUserDto } from './models';
 import * as argon from 'argon2';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { Tokens } from './types';
+import { Response as ResponseType } from 'express';
 
 @Injectable({})
 export class AuthService {
@@ -13,7 +13,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async registerUser(user: RegisterUserDto): Promise<Tokens> {
+  async registerUser(user: RegisterUserDto): Promise<TokensDto> {
     const existingUser = await this.prisma.user.findUnique({ where: { email: user.email } });
     if (existingUser) throw new ForbiddenException('Cet email est déjà utilisé');
 
@@ -37,7 +37,7 @@ export class AuthService {
       });
 
       // génération de 2 nouveaux tokens
-      const tokens = await this.getTokens(newUser.id, newUser.email);
+      const tokens = await this.getTokens(newUser.id, newUser.email, newUser.role);
       await this.updateRtHash(newUser.id, tokens.refresh_token);
       return tokens;
     } catch (error) {
@@ -50,7 +50,7 @@ export class AuthService {
     }
   }
 
-  async validateUser(user: LoginUserDto) {
+  async validateUser(user: LoginUserDto): Promise<TokensDto> {
     // récupération du user dans la base de données
     const foundUser = await this.prisma.user.findUnique({ where: { email: user.email } });
     if (!foundUser) throw new ForbiddenException('Accès refusé!');
@@ -60,19 +60,20 @@ export class AuthService {
     if (!pwMatches) throw new ForbiddenException('Accès refusé!');
 
     // génération de 2 nouveaux tokens
-    const tokens = await this.getTokens(foundUser.id, foundUser.email);
+    const tokens = await this.getTokens(foundUser.id, foundUser.email, foundUser.role);
     await this.updateRtHash(foundUser.id, tokens.refresh_token);
+    
     return tokens;
   }
 
-  async logout(userId: number) {
+  async logoutUser(userId: number) {
     await this.prisma.user.updateMany({
       where: { id: userId, hashedRt: { not: null } },
       data: { hashedRt: null },
     });
   }
 
-  async refreshTokens(userId: number, rt: string): Promise<Tokens> {
+  async refreshTokens(userId: number, rt: string): Promise<TokensDto> {
     // récupération du user dans la base de données
     const user = await this.prisma.user.findFirst({
       where: { id: userId },
@@ -85,7 +86,7 @@ export class AuthService {
     if (!rtMatches) throw new ForbiddenException('Accès refusé!');
 
     // génération de 2 nouveaux tokens
-    const tokens = await this.getTokens(user.id, user.email);
+    const tokens = await this.getTokens(user.id, user.email, user.role);
     await this.updateRtHash(user.id, tokens.refresh_token);
     return tokens;
   }
@@ -100,20 +101,25 @@ export class AuthService {
     });
   }
 
+  storeTokenInCookie(res: ResponseType, authToken: TokensDto) {
+    res.cookie('access_token', authToken.access_token, { maxAge: 1000 * 60 * 15, httpOnly: true });
+    res.cookie('refresh_token', authToken.refresh_token, { maxAge: 1000 * 60 * 60 * 24 * 7, httpOnly: true });
+  }
+
   // Helpers
 
   hashData(data: string) {
     return argon.hash(data);
   }
 
-  async getTokens(userId: number, email: string): Promise<Tokens> {
+  async getTokens(userId: number, email: string, role: string): Promise<TokensDto> {
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(
-        { sub: userId, email },
+        { sub: userId, email, role },
         { secret: 'at-secret', expiresIn: 60 * 15 }, // 15 minutes
       ),
       this.jwtService.signAsync(
-        { sub: userId, email },
+        { sub: userId, email, role },
         { secret: 'rt-secret', expiresIn: 60 * 60 * 24 * 7 }, // 1 semaine
       ),
     ]);

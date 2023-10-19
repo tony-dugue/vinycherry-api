@@ -1,7 +1,9 @@
-import { ApiProperty, ApiResponseProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+import { Role } from '../enum/role.enum';
+import { IsEnum } from 'class-validator';
 
 export class FindUserDTO {
-  @ApiResponseProperty()
+  @ApiProperty()
   id: number;
 
   @ApiProperty()
@@ -13,12 +15,6 @@ export class FindUserDTO {
   @ApiProperty()
   email: string;
 
-  @ApiProperty()
-  hash: string;
-
-  @ApiProperty()
-  hashedRt: string | null;
-
   @ApiProperty({
     description: "Le prénom d'un utilisateur",
     minLength: 2,
@@ -29,11 +25,7 @@ export class FindUserDTO {
   @ApiProperty()
   lastName: string;
 
-  @ApiProperty()
-  role: Role;
-}
-
-enum Role {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
+  @ApiProperty({ enum: ['ADMIN', 'USER']})
+  @IsEnum(Role)
+  role: string;
 }

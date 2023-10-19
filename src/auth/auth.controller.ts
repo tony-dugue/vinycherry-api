@@ -1,11 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Response as ResponseType } from 'express';
+import { Request as RequestType } from 'express';
 
-import { GetCurrentUser, GetCurrentUserId } from 'src/common/decorators/user';
-import { RtGuard } from 'src/common/guards';
+import { GetCurrentUserId } from 'src/common/decorators/user';
+import { RefreshAuthGuard } from 'src/common/guards';
 
-import { LoginUserDto, RegisterUserDto } from './models';
-import { Tokens } from './types';
+import { LoginUserDto, RegisterUserDto, TokensDto } from './models';
 import { AuthService } from './auth.service';
 import { Public } from 'src/common/decorators/auth';
 
@@ -18,47 +19,61 @@ export class AuthController {
   @Public()
   @Post('local/register')
   @ApiOperation({
-    summary: "Inscrire un utilisateur",
-    description: "Inscrire un utilisateur",
+    summary: 'Inscrire un utilisateur',
+    description: 'Inscrire un utilisateur',
   })
   @HttpCode(HttpStatus.CREATED)
-  register(@Body() user: RegisterUserDto): Promise<Tokens> {
-    return this.authService.registerUser(user);
+  async register(@Body() user: RegisterUserDto, @Res({ passthrough: true }) res: ResponseType): Promise<TokensDto> {
+    await this.authService.registerUser(user);
+    res.status(201).send({ message: "Création de l'utilisateur avec succès" });
+    return;
   }
 
   @Public()
   @Post('local/login')
   @ApiOperation({
-    summary: "Connecter un utilisateur",
-    description: "Connecter un utilisateur",
+    summary: "Connecter un utilisateur à l'application",
+    description: "Connecter un utilisateur à l'application",
   })
   @HttpCode(HttpStatus.OK)
-  login(@Body() user: LoginUserDto) {
-    return this.authService.validateUser(user);
+  async login(@Body() user: LoginUserDto, @Res({ passthrough: true }) res: ResponseType) {
+    const tokens = await this.authService.validateUser(user);
+    this.authService.storeTokenInCookie(res, tokens);
+    res.status(200).send({ message: 'Authentification avec succès' });
+    return;
   }
 
   @Post('logout')
   @ApiOperation({
-    summary: "Déconnecter un utilisateur",
-    description: "Déconnecter un utilisateur",
+    summary: "Déconnecter un utilisateur de l'application",
+    description: "Déconnecter un utilisateur de l'application",
   })
   @HttpCode(HttpStatus.OK)
-  logout(@GetCurrentUserId() userId: number) {
-    return this.authService.logout(userId);
+  async logout(@GetCurrentUserId() userId: number, @Res({ passthrough: true }) res: ResponseType) {
+    await this.authService.logoutUser(userId);
+    res.clearCookie('access_token');
+    res.clearCookie('refresh_token');
+    res.status(200).send({ message: "Déconnexion de l'application avec succès" });
+    return;
   }
 
   @Public()
-  @UseGuards(RtGuard)
-  @Post('refresh')
+  @UseGuards(RefreshAuthGuard)
+  @Get('refresh')
   @ApiOperation({
-    summary: "Vérifier le refresh token",
-    description: "Vérifier le refresh token",
+    summary: 'Vérifier le refresh token',
+    description: 'Vérifier le refresh token',
   })
   @HttpCode(HttpStatus.OK)
-  refreshTokens(
+  async refreshTokens(
     @GetCurrentUserId() userId: number,
-    @GetCurrentUser('refreshToken') refreshToken: string,
+    @Req() req: RequestType, 
+    @Res({ passthrough: true }) res: ResponseType,
   ) {
-    return this.authService.refreshTokens(userId, refreshToken);
+    const refreshToken = req.cookies.refresh_token;
+    const newAuthToken = await this.authService.refreshTokens(userId, refreshToken);
+    this.authService.storeTokenInCookie(res, newAuthToken);
+    res.status(200).send({ message: 'Réinitialisation tokens avec succès' });
+    return;
   }
 }

@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { OpenApiNestFactory } from 'nest-openapi-tools';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   // on instancie l'application
@@ -10,6 +10,12 @@ async function bootstrap() {
 
   // activation globalement des pipes de validation dans l'app
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+
+  // activation global des cookies
+  app.use(cookieParser());
+
+  // activation des CORS
+  app.enableCors({ origin: 'http://localhost:3000', credentials: true });
 
   // initialisation de swagger
   const swaggerOptions = new DocumentBuilder()
@@ -19,7 +25,7 @@ async function bootstrap() {
     .addTag('vinycherry')
     .addBearerAuth()
     .build();
-  
+
   const document = SwaggerModule.createDocument(app, swaggerOptions);
   SwaggerModule.setup('api', app, document);
 
