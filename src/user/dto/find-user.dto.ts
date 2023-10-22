@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '../enum/role.enum';
 import { IsEnum } from 'class-validator';
 
-export class FindUserDTO {
+export class UserDTO {
   @ApiProperty()
   id: number;
 

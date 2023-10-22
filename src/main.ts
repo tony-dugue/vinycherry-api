@@ -11,11 +11,11 @@ async function bootstrap() {
   // activation globalement des pipes de validation dans l'app
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
+    // activation des CORS
+    app.enableCors({ origin: 'http://localhost:3000', credentials: true });
+
   // activation global des cookies
   app.use(cookieParser());
-
-  // activation des CORS
-  app.enableCors({ origin: 'http://localhost:3000', credentials: true });
 
   // initialisation de swagger
   const swaggerOptions = new DocumentBuilder()

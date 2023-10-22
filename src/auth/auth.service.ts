@@ -62,7 +62,7 @@ export class AuthService {
     // génération de 2 nouveaux tokens
     const tokens = await this.getTokens(foundUser.id, foundUser.email, foundUser.role);
     await this.updateRtHash(foundUser.id, tokens.refresh_token);
-    
+
     return tokens;
   }
 
@@ -102,8 +102,11 @@ export class AuthService {
   }
 
   storeTokenInCookie(res: ResponseType, authToken: TokensDto) {
-    res.cookie('access_token', authToken.access_token, { maxAge: 1000 * 60 * 15, httpOnly: true });
-    res.cookie('refresh_token', authToken.refresh_token, { maxAge: 1000 * 60 * 60 * 24 * 7, httpOnly: true });
+    res.cookie('access_token', authToken.access_token, { maxAge: 1000 * 60 * 1, httpOnly: true });
+    res.cookie('refresh_token', authToken.refresh_token, {
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+      httpOnly: true,
+    });
   }
 
   // Helpers
