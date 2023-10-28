@@ -12,7 +12,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(user: LoginUserDto): Promise<TokensDto> {
+  async validateUser(user: LoginUserDto): Promise<{tokens: TokensDto, userId: number}> {
     // récupération du user dans la base de données
     const foundUser = await this.prisma.user.findUnique({ where: { email: user.email } });
     if (!foundUser) throw new UnauthorizedException('Accès refusé!');
@@ -25,7 +25,7 @@ export class AuthService {
     const tokens = await this.getTokens(foundUser.id, foundUser.email, foundUser.role);
     await this.updateRefreshTokenHash(foundUser.id, tokens.refresh_token);
 
-    return tokens;
+    return { tokens, userId: foundUser.id };
   }
 
   async logoutUser(userId: number) {

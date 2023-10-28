@@ -41,10 +41,15 @@ export class AuthController {
   })
   @HttpCode(HttpStatus.OK)
   async login(@Body() user: LoginUserDto, @Res({ passthrough: true }) res: ResponseType) {
-    const tokens = await this.authService.validateUser(user);
+    const { tokens, userId } = await this.authService.validateUser(user);
     this.authService.storeTokenInCookie(res, tokens);
+    const { id, email, firstName, lastName, role } = await this.userService.getUserInformations(userId);
     res.status(200).send({ 
-      message: 'Authentification avec succès',
+      id, 
+      email, 
+      firstName, 
+      lastName, 
+      role,
       access_token: tokens.access_token 
     });
     return;
