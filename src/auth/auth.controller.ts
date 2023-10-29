@@ -1,11 +1,11 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response as ResponseType, Request as RequestType } from 'express';
 
 import { GetCurrentUserId } from 'src/common/decorators/user';
 import { RefreshAuthGuard } from 'src/common/guards';
 
-import { LoginUserDto, TokensDto } from './models';
+import { AccessTokenDto, LoginUserDto, TokensDto } from './models';
 import { AuthService } from './auth.service';
 import { Public } from 'src/common/decorators/auth';
 import { UserService } from 'src/user/user.service';
@@ -39,17 +39,12 @@ export class AuthController {
     summary: "Connecter un utilisateur à l'application",
     description: "Connecter un utilisateur à l'application",
   })
+  @ApiOkResponse({ type: AccessTokenDto })
   @HttpCode(HttpStatus.OK)
-  async login(@Body() user: LoginUserDto, @Res({ passthrough: true }) res: ResponseType) {
-    const { tokens, userId } = await this.authService.validateUser(user);
+  async login(@Body() user: LoginUserDto, @Res({ passthrough: true }) res: ResponseType): Promise<AccessTokenDto> {
+    const { tokens } = await this.authService.validateUser(user);
     this.authService.storeTokenInCookie(res, tokens);
-    const { id, email, firstName, lastName, role } = await this.userService.getUserInformations(userId);
     res.status(200).send({ 
-      id, 
-      email, 
-      firstName, 
-      lastName, 
-      role,
       access_token: tokens.access_token 
     });
     return;
@@ -77,11 +72,13 @@ export class AuthController {
     description: 'Vérifier le refresh token',
   })
   @HttpCode(HttpStatus.OK)
-  async refreshTokens(@GetCurrentUserId() userId: number, @Req() req: RequestType, @Res({ passthrough: true }) res: ResponseType) {
+  async refreshTokens(@GetCurrentUserId() userId: number, @Req() req: RequestType, @Res({ passthrough: true }) res: ResponseType): Promise<AccessTokenDto> {
     const refreshToken = req.cookies.refresh_token;
     const newAuthToken = await this.authService.refreshTokens(userId, refreshToken);
     this.authService.storeTokenInCookie(res, newAuthToken);
-    res.status(200).send({ message: 'Réinitialisation tokens avec succès' });
+    res.status(200).send({ 
+      access_token: newAuthToken.access_token 
+    });
     return;
   }
 }

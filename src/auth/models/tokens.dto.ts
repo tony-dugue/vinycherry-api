@@ -7,3 +7,8 @@ export class TokensDto {
   @ApiProperty()
   refresh_token: string;
 }
+
+export class AccessTokenDto {
+  @ApiProperty()
+  access_token: string;
+}

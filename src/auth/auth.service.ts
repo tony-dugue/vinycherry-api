@@ -64,7 +64,7 @@ export class AuthService {
   }
 
   storeTokenInCookie(res: ResponseType, authToken: TokensDto) {
-    res.cookie('access_token', authToken.access_token, { maxAge: 1000 * 60 * 1, httpOnly: true });
+    res.cookie('access_token', authToken.access_token, { maxAge: 1000 * 60 * 10, httpOnly: true });
     res.cookie('refresh_token', authToken.refresh_token, {
       maxAge: 1000 * 60 * 60 * 24 * 7,
       httpOnly: true,
